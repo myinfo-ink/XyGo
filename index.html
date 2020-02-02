@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="icon" type="image/x-icon" href="logo.ico">
+    <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+        body {
+            color: white;
+            background-image: url(bg.jpg);
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            padding: 10px;
+            margin: 0;
+        }
+        .wgo-board {
+            margin: auto;
+        }
+        .start_btn, .navigator {
+            display: inline-block;;
+        }
+
+        .start_btn, .navigator button {
+            background: white;
+        }
+
+        .navigator {
+            position: absolute;
+            right: 30px;
+        }
+    </style>
+    <title>xyg-ai</title>
+    <script type="text/javascript" src="wgo.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
+    <script>
+        x_coor = "ABCDEFGHI";
+        const sleep = (milliseconds) => {
+            return new Promise(resolve => setTimeout(resolve, milliseconds));
+        }
+        gameFinished = false;
+
+        function update_board(x, y) {
+            if (current_game.isValid(x, y, current_game.turn, true)) {
+                var prev = current_game.getPosition();
+                current_game.play(x, y);
+                var cur = current_game.getPosition();
+                var change = prev.compare(cur);
+                board.update(change);
+            }
+        }
+
+        function check_winner() {
+            if (choice > 2) {
+                stoneLevel = 5;
+            } else {
+                stoneLevel = 3;
+            }
+            var humCaptured = current_game.getCaptureCount(WGo.B);
+            var aiCaptured = current_game.getCaptureCount(WGo.W);
+            if (humCaptured >= stoneLevel && aiCaptured < stoneLevel) {
+                alert('您获得了胜利');
+                gameFinished = true;
+            } else if (humCaptured < stoneLevel && aiCaptured >= stoneLevel) {
+                alert('AI获得了胜利');
+                gameFinished = true;
+                end_game();
+            }
+        }
+
+        function end_game() {
+            alert("对局结束");
+            location.reload();
+        }
+
+        window.getValue = function getValue(obj) {
+            choice = obj.value;
+            document.getElementById("start").disabled = false;
+        }
+
+        $(document).ready(function() {
+            board = new WGo.Board(document.getElementById('board'), {
+                size: 9,
+                width: 200,
+                section: {
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                },
+                background: '#c2c2c2'
+            });
+            current_game = new WGo.Game(9, 'ALL');
+            $("#finish").click(function() {
+                end_game();
+            });
+            document.getElementById("finish").disabled = true;
+            document.getElementById("start").disabled = true;
+
+            $('#start').click(function() {
+                document.getElementById('board_init').style.display = 'block';
+                document.getElementById('board_init').style.display = 'none';
+                alert("对局开始");
+                document.getElementById("finish").disabled = false;
+                board.addEventListener("click", function(x, y) {
+                    update_board(x, y);
+                    check_winner();
+                    document.getElementById('ai_thinking').style.display = "block";
+                    humPos = x_coor[x] + y;
+                    if (!gameFinished) {
+                        document.getElementById('ai_thinking').style.display = 'none';
+                        positionValid = false
+                        x = 0
+                        y = 0
+                        count = 0
+                        while (!positionValid) {
+                            x = parseInt(Math.random() * 8)
+                            y = parseInt(Math.random() * 8)
+                            if (this.current_game.isValid(x, y)) {
+                                positionValid = true
+                            }
+                            if (count === 1000) {
+                                positionValid = true
+                            }
+                            count = count + 1
+                        }
+                        if (count < 1000) {
+                            update_board(x, y)
+                        } else {
+                            check_winner();
+                            end_game();
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <div id="game_page_body">
+        <h1>欢迎使用BetaGo</h1>
+        <h3>围棋本应简单</h3>
+        <div id="level_selector">
+            <label for="level_selector">AI等级选项<br>
+                <input type="radio" class="radio" name="choices" id="choice2" value="2" onclick="getValue(this)" />吃3个子
+                <input type="radio" class="radio" name="choices" id="choice4" value="4" onclick="getValue(this)" />吃5个子
+            </label>
+        </div>
+        <div class="start_btn">
+            <button id="start">开始对局</button>
+        </div>
+        <div class="navigator">
+            <button id="finish">结束对局</button>
+        </div>
+        <br>
+        <br>
+        <div id="board_area">
+            <div id="board"></div>
+            <div id="board_init" style="position:absolute; left: 0; top: 0; width: 600px; height: 600px; display: none;">
+                对局初始化中。。。
+            </div>
+            <div id="ai_thinking" style="position: absolute; left: 0; top: 0; width: 600px; height: 600px; display: none;">
+                AI思考中。。。
+            </div>
+        </div>
+        <div class="game_banner">
+            <p>
+                对局测试须知：<br>
+                1. 想提前结束对局可以点击“结束对局”<br>
+                2. 结束对局之后刷新页面可以重新开始对局<br>
+                3. 当前AI等级大约对应弈城18K<br>
+                4. 选择AI等级之后点击“开始对局”<br>
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>
